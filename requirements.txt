@@ -1,0 +1,6 @@
+matplotlib==3.8.0
+pandas==1.5.3
+plotly==5.16.1
+streamlit==1.27.2
+streamlit_option_menu==0.3.6
+wordcloud==1.9.2
