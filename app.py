@@ -12,6 +12,9 @@ st.set_page_config(page_title="F.O.A.M", layout="wide", page_icon="📊")
 with open("css/style.css") as css:
     st.markdown(f'<style>{css.read()}</style>', unsafe_allow_html=True)
 
+with st.sidebar:
+    st.image('./assets/icon.png')
+
 # ----------------------------------- Data Loading ------------------------------------
 
 active_opportunities = pd.read_csv("ActiveOpportunities.csv")
@@ -24,16 +27,9 @@ active_opportunities["Response_Deadline"] = pd.to_datetime(active_opportunities[
 active_opportunities["Archive_Date"] = pd.to_datetime(active_opportunities["Archive_Date"])
 
 # ------------------------------------ Menu  -------------------------------------------
-with st.sidebar:
-    view = menu.option_menu(menu_title="Pages", orientation="vertical", menu_icon=None,
-                            options=["Current Opportunities", "Competitor Info", "Forecast Recompetes"])
-
+view = menu.option_menu(menu_title=None, orientation="horizontal", menu_icon=None,
+                        options=["Current Opportunities", "Competitor Info", "Forecast Recompetes"])
 if view == "Current Opportunities":
-    # ------------------------------------ Widgets -----------------------------------------
-    st.markdown(get_widgets_formats(Widgets.TITLE).format('#1E3231', 'white', "Current Opportunities"),
-                unsafe_allow_html=True)
-    # ------------------------------------ Filters ----------------------------------------
-
     with st.sidebar:
         agency = st.multiselect(label="Agency",
                                 options=set(active_opportunities["Awarding_Agency"].values))
@@ -196,11 +192,6 @@ if view == "Current Opportunities":
     st.plotly_chart(fig, use_container_width=True)
 
 if view == "Competitor Info":
-    # ------------------------------------ Widgets -----------------------------------------
-    st.markdown(get_widgets_formats(Widgets.TITLE).format('#1E3231', 'white', "Competitor Info"),
-                unsafe_allow_html=True)
-    # ------------------------------------ Filters ----------------------------------------
-
     with st.sidebar:
         agency = st.multiselect(label="Agency",
                                 options=set(past_awards["Awarding Agency"].values))
@@ -336,34 +327,8 @@ if view == "Competitor Info":
     fig.update_layout(margin=dict(l=0, r=10, b=10, t=30), title="PAST AWARDS AMOUNT BY NAICS AND RECIPIENT")
 
     first_chart_row[1].plotly_chart(fig, use_container_width=True)
-    # # ----------------------------------- Avg. Days to Response to Deadline By NAICS --------------------
-    #
-    # avg_days_to_response_NAICS = filtered_df.groupby(
-    #     "NAICSCodeDesc"
-    # )["Days_to_ResponseDeadline"].mean().reset_index()
-    # avg_days_to_response_NAICS = avg_days_to_response_NAICS.sort_values("Days_to_ResponseDeadline", ascending=True)
-    # avg_days_to_response_NAICS['NAICSCodeDesc'] = avg_days_to_response_NAICS['NAICSCodeDesc'].str[:15]
-    # avg_days_to_response_NAICS = avg_days_to_response_NAICS[:27]
-    # fig = go.Figure()
-    # fig.add_trace(
-    #     go.Bar(
-    #         y=avg_days_to_response_NAICS["NAICSCodeDesc"],
-    #         x=avg_days_to_response_NAICS["Days_to_ResponseDeadline"],
-    #         orientation='h',
-    #         text=avg_days_to_response_NAICS["Days_to_ResponseDeadline"],
-    #         marker_color="#8ab17d"
-    #     )
-    # )
-    # fig.update_layout(title="AVG. DAYS TO RESPONSE TO DEADLINE BY NAICS", height=400)
-    #
-    # first_chart_row[1].plotly_chart(fig, use_container_width=True)
 
 if view == "Forecast Recompetes":
-    # ------------------------------------ Widgets -----------------------------------------
-    st.markdown(get_widgets_formats(Widgets.TITLE).format('#1E3231', 'white', "Forecast Recompetes"),
-                unsafe_allow_html=True)
-    # ------------------------------------ Filters ----------------------------------------
-
     with st.sidebar:
         agency = st.multiselect(label="Agency",
                                 options=set(past_awards["Awarding Agency"].values))
