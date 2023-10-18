@@ -22,20 +22,6 @@ def get_widgets_formats(widget_type: Widgets):
                 <h1 style="color:{};text-align:center;">{}</h1>
                 </div>
                 """
-        case Widgets.SUB_TITLE:
-            return """
-                <div style="background-color:{};padding:0.5px;border-radius:5px;">
-                <h4 style="color:{};text-align:center;">{}</h6>
-                </div>
-                """
-        case Widgets.HEAD_TITLE:
-            return """<h6 style="text-align:left;margin-top:2px">{}</h6>"""
-
-        case Widgets.COLORS:
-            return ["#2a9d8f", "#74a57f", "#8ab17d", "#8bb174", "#e9c46a", "#efb366", "#f4a261", "#ee8959",
-                    "#e76f51", "#e76f51", "#e76f51", "#e76f51", "#e76f51", "#e76f51", "#e76f51", "#e76f51",
-                    "#e76f51", "#e76f51", "#e76f51", "#e76f51", "#e76f51", "#e76f51", "#e76f51", "#e76f51",
-                    "#e76f51", "#e76f51", "#e76f51", "#e76f51"]
 
 
 def pre_process_data(data: pd.DataFrame):
@@ -90,7 +76,7 @@ def current_opportunities_kpis(data: pd.DataFrame):
     total_opportunities = data["Notice_ID"].nunique()
     days_to_respond = data["Days_to_ResponseDeadline"].mean()
     count_positive_ecs = len(data[data["Score_Mapped"] == "Positive"])
-    count_green = len(data[data['DaysRemainingCode'] == 'Green'])
+    count_green = len(data[data['DaysRemainingCode'] == "#52b788"])
 
     return total_opportunities, days_to_respond, count_positive_ecs, count_green
 
@@ -155,6 +141,26 @@ def bar_chart(data: pd.DataFrame, x: str, y: str, orient: str, title: str, text=
                           font_size=16,
                           font_family="Rockwell"
                       ))
+    return fig
+
+
+def binned_bar_chart(data: pd.DataFrame, x: str, y: str, color: str, title):
+    fig = px.bar(data_frame=data,
+                 x=x,
+                 y=y,
+                 color=color,
+                 title=title,
+                 )
+    return fig
+
+
+def binned_scatter_plot(data: pd.DataFrame, x: str, y: str, color: str, title: str):
+    fig = px.scatter(data_frame=data, x=x,
+                     y=y,
+                     color=color,
+                     symbol_sequence=list(["diamond"]*len(data)),
+                     title=title,
+                     )
     return fig
 
 

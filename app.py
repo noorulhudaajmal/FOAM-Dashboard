@@ -6,7 +6,8 @@ import streamlit_option_menu as menu
 from wordcloud import WordCloud
 from utils import Widgets, get_widgets_formats, format_currency_label, \
     current_opportunities_kpis, bar_scatter_chart, bar_chart, scatter_plot, pre_process_data, opportunities_table, \
-    competitor_kpis, pie_chart, awards_table, table_chart, contracts_kpis, forecast_table
+    competitor_kpis, pie_chart, awards_table, table_chart, contracts_kpis, forecast_table, binned_bar_chart, \
+    binned_scatter_plot
 
 st.set_page_config(page_title="F.O.A.M", layout="wide", page_icon="📊")
 # ---------------------------------- Page Styling -------------------------------------
@@ -50,7 +51,7 @@ view = menu.option_menu(menu_title=None, orientation="horizontal", menu_icon=Non
 if view == "Current Opportunities":
     with st.sidebar:
         awarding_agency = st.multiselect(label="Agency",
-                                options=set(active_opportunities["Awarding_Agency"].values))
+                                         options=set(active_opportunities["Awarding_Agency"].values))
         opp_type = st.multiselect(label="Opportunity Type",
                                   options=set(active_opportunities["Type"].values))
         ecs_rating = st.multiselect(label="ECS Rating",
@@ -144,7 +145,7 @@ if view == "Current Opportunities":
 if view == "Competitor Info":
     with st.sidebar:
         agency_name = st.multiselect(label="Agency",
-                                options=set(past_awards["Awarding Agency"].values))
+                                     options=set(past_awards["Awarding Agency"].values))
         awardee = st.multiselect(label="Awardee",
                                  options=set(past_awards["Recipient Name"].values))
         contract_type = st.multiselect(label="Contract Type",
@@ -288,12 +289,11 @@ if view == "Forecast Recompetes":
     award_amount_by_months = award_amount_by_months[
         award_amount_by_months["Months Until Contract Ends"] != "Contract/s Expired"
         ]
-    fig = px.scatter(data_frame=award_amount_by_months, x="Months Until Contract Ends",
-                     y="Award Amount",
-                     color="Recipient Name",
-                     symbol_sequence=list(award_amount_by_months["Symbol"].values),
-                     title="AWARD AMOUNT BY MONTHS UNTIL CONTRACT ENDS",
-                     )
+    fig = binned_scatter_plot(data=award_amount_by_months, x="Months Until Contract Ends",
+                              y="Award Amount",
+                              color="Recipient Name",
+                              title="AWARD AMOUNT BY MONTHS UNTIL CONTRACT ENDS",
+                              )
 
     first_chart_row_page3[0].plotly_chart(fig, use_container_width=True)
     # --------------------- Award Amount By Contract Duration (Years) -------------------
@@ -303,12 +303,9 @@ if view == "Forecast Recompetes":
     )["Award Amount"].sum().reset_index()
     award_amount_by_duration["Symbol"] = "diamond"
 
-    fig = px.bar(data_frame=award_amount_by_duration,
-                 x="Contract Duration (Years)",
-                 y="Award Amount",
-                 color="Recipient Name",
-                 title="AWARD AMOUNT BY CONTRACT DURATION (Years)",
-                 )
+    fig = binned_bar_chart(data=award_amount_by_duration, x="Contract Duration (Years)",
+                           y="Award Amount", color="Recipient Name",
+                           title="AWARD AMOUNT BY CONTRACT DURATION (Years)")
 
     first_chart_row_page3[1].plotly_chart(fig, use_container_width=True)
     # ------------------------------------ Filtered dataframe ----------------------------
