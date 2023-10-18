@@ -17,3 +17,7 @@ html, body, [class*="css"] {
     align-items: center;
     height: 100vh;
 }
+
+.stTable tr{
+    height: 100px; # use this to adjust the height
+}
