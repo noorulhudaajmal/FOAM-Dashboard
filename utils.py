@@ -121,13 +121,14 @@ def bar_scatter_chart(data: pd.DataFrame, bar_X: str, bar_Y: str, bar_name: str,
             y=data[scatter_Y],
             mode="lines+markers",
             name=scatter_name,
-            marker_color="#e63946"
+            marker_color="#ff4d6d"
         )
     )
     fig.update_layout(title=title, height=400, showlegend=False,
                       hovermode="x unified",
                       hoverlabel=dict(
                           bgcolor="white",
+                          font_color="black",
                           font_size=16,
                           font_family="Rockwell"
                       ))
@@ -150,6 +151,7 @@ def bar_chart(data: pd.DataFrame, x: str, y: str, orient: str, title: str, text=
                       hovermode="x unified",
                       hoverlabel=dict(
                           bgcolor="white",
+                          font_color="black",
                           font_size=16,
                           font_family="Rockwell"
                       ))
@@ -176,6 +178,7 @@ def scatter_plot(data: pd.DataFrame, x: str, y: str, title: str, name, text=None
                       hovermode="x unified",
                       hoverlabel=dict(
                           bgcolor="white",
+                          font_color="black",
                           font_size=16,
                           font_family="Rockwell"
                       ))
@@ -188,6 +191,7 @@ def pie_chart(data: pd.DataFrame, values: str, names: str, title: str, text_info
     fig.update_traces(textinfo=text_info,
                       hoverlabel=dict(
                           bgcolor="white",
+                          font_color="black",
                           font_size=16,
                           font_family="Rockwell"
                       )
