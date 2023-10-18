@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 import streamlit_option_menu as menu
 from wordcloud import WordCloud
-import matplotlib.pyplot as plt
 from utils import Widgets, get_widgets_formats, format_currency_label
 
 st.set_page_config(page_title="F.O.A.M", layout="wide", page_icon="📊")
