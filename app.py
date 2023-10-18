@@ -49,7 +49,7 @@ view = menu.option_menu(menu_title=None, orientation="horizontal", menu_icon=Non
                         options=["Current Opportunities", "Competitor Info", "Forecast Recompetes"])
 if view == "Current Opportunities":
     with st.sidebar:
-        agency = st.multiselect(label="Agency",
+        awarding_agency = st.multiselect(label="Agency",
                                 options=set(active_opportunities["Awarding_Agency"].values))
         opp_type = st.multiselect(label="Opportunity Type",
                                   options=set(active_opportunities["Type"].values))
@@ -65,8 +65,8 @@ if view == "Current Opportunities":
     filtered_df = active_opportunities.copy()  # Create a copy of the original DataFrame
 
     # Check if any filters are selected and apply them
-    if agency:
-        filtered_df = filtered_df[filtered_df["Awarding_Agency"].isin(agency)]
+    if awarding_agency:
+        filtered_df = filtered_df[filtered_df["Awarding_Agency"].isin(awarding_agency)]
     if opp_type:
         filtered_df = filtered_df[filtered_df["Type"].isin(opp_type)]
     if ecs_rating:
@@ -143,7 +143,7 @@ if view == "Current Opportunities":
 
 if view == "Competitor Info":
     with st.sidebar:
-        agency = st.multiselect(label="Agency",
+        agency_name = st.multiselect(label="Agency",
                                 options=set(past_awards["Awarding Agency"].values))
         awardee = st.multiselect(label="Awardee",
                                  options=set(past_awards["Recipient Name"].values))
@@ -159,8 +159,8 @@ if view == "Competitor Info":
     filtered_past_awards = past_awards.copy()  # Create a copy of the original DataFrame
 
     # Check if any filters are selected and apply them
-    if agency:
-        filtered_past_awards = filtered_past_awards[filtered_past_awards["Awarding Agency"].isin(agency)]
+    if agency_name:
+        filtered_past_awards = filtered_past_awards[filtered_past_awards["Awarding Agency"].isin(agency_name)]
     if awardee:
         filtered_past_awards = filtered_past_awards[filtered_past_awards["Recipient Name"].isin(awardee)]
     if contract_type:
