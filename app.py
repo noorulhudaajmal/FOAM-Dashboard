@@ -14,6 +14,14 @@ st.set_page_config(page_title="F.O.A.M", layout="wide", page_icon="📊")
 with open("css/style.css") as css:
     st.markdown(f'<style>{css.read()}</style>', unsafe_allow_html=True)
 
+st.markdown("""
+<style>
+    [data-testid=stSidebar] {
+        background-color: #708d81;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 with st.sidebar:
     st.image('./assets/icon.png')
 
