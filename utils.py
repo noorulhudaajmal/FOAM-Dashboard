@@ -1,27 +1,36 @@
-from enum import Enum
 import pandas as pd
-import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
-import streamlit_option_menu as menu
-from wordcloud import WordCloud
+
+power_bi_colors = [
+    "#3f37c9",  # Blue
+    "#FF6C00",  # Orange
+    "#007f5f",
+    "#7B00B4",  # Purple
+    "#FF0000",  # Red
+    "#6A007F",  # Dark Purple
+    "#fdd85d",  # Yellow
+    "#0077b6",  # Light Blue
+    "#aacc00",  # Green
+    "#495057",  # Gray
+]
 
 
-class Widgets(Enum):
-    TITLE = 1
-    SUB_TITLE = 2
-    HEAD_TITLE = 3
-    COLORS = 5
-
-
-def get_widgets_formats(widget_type: Widgets):
-    match widget_type:
-        case Widgets.TITLE:
-            return """
-                <div style="background-color:{};padding:10px;border-radius:10px">
-                <h1 style="color:{};text-align:center;">{}</h1>
-                </div>
-                """
+metric_div = """
+    <div data-testid="metric-container" style="background:#708d81;
+    border-radius:10px;text-align:center;margin:8px;width:80%;margin-left:30px;">
+      <label data-testid="stMetricLabel" visibility="0" class="css-q49buc e1i5pmia2">
+        <div class="css-1wivap2 e1i5pmia3">
+          <div data-testid="stMarkdownContainer" class="css-q8sbsg e1nzilvr5">
+            <h4 style="color:white;">{label}</h4>
+          </div>
+        </div>
+      </label>
+      <div data-testid="stMetricValue" class="css-1xarl3l e1i5pmia1">
+        <div class="css-1wivap2 e1i5pmia3">{value}</div>
+      </div>
+    </div>
+"""
 
 
 def pre_process_data(data: pd.DataFrame):
@@ -32,7 +41,6 @@ def pre_process_data(data: pd.DataFrame):
         "Yellow": "#e9c46a",
         "Green": "#52b788"
     })
-
     return data
 
 
@@ -48,12 +56,12 @@ def opportunities_table(data: pd.DataFrame, columns: list):
         "Posted_Date": "Posted Date"
     }, inplace=True)
     table_data["Posted Date"] = table_data["Posted Date"].dt.date
-
+    table_data["URL"] = table_data["URL"].apply(lambda x: f"""<a href="{x}">Visit</a>""")
     fig = go.Figure(data=[go.Table(
-        columnwidth=[2, 2, 2, 1, 1, 4, 2, 1, 1],
+        columnwidth=[2, 2, 2, 1, 1, 1, 2, 1, 1],
         header=dict(
             values=list(table_data.columns),
-            font=dict(size=18, color='white', family='ubuntu'),
+            font=dict(size=14, color='white', family='ubuntu'),
             fill_color='#264653',
             align=['left', 'center'],
             height=80
@@ -64,9 +72,65 @@ def opportunities_table(data: pd.DataFrame, columns: list):
             fill_color=['#f5ebe0', '#f5ebe0', '#f5ebe0', '#f5ebe0',
                         data["DaysRemainingCode"].values, '#f5ebe0'],
             height=80
-        )
+        ))]
     )
-    ]
+    fig.update_layout(margin=dict(l=0, r=10, b=10, t=30), height=500)
+    return fig
+
+
+def forecast_table(data: pd.DataFrame, columns: list):
+    table_data = data[columns]
+    table_data.rename(columns={
+        "Recipient Name": "Incumbent Name",
+        "naics_description": "Description",
+        "Award Amount": "Current Award Amount",
+        "PastAwards_URL": "URL"
+    }, inplace=True)
+    table_data["Current Award Amount"] = table_data["Current Award Amount"].apply(format_currency_label)
+    table_data["URL"] = table_data["URL"].apply(lambda x: f"""<a href="{x}">Go to Site</a>""")
+    fig = go.Figure(data=[go.Table(
+        columnwidth=[1, 1, 1, 2, 1, 1, 1, 1, 1, 1],
+        header=dict(
+            values=list(table_data.columns),
+            font=dict(size=14, color='white', family='ubuntu'),
+            fill_color='#264653',
+            align=['left', 'center'],
+            height=80
+        ),
+        cells=dict(
+            values=[table_data[K].tolist() for K in table_data.columns],
+            font=dict(size=12, color="black", family='ubuntu'),
+            fill_color='#f5ebe0',
+            height=80
+        ))]
+    )
+    fig.update_layout(margin=dict(l=0, r=10, b=10, t=30), height=500)
+    return fig
+
+
+def awards_table(data: pd.DataFrame, columns: list):
+    table_data = data[columns]
+    table_data.rename(columns={
+        "AwardAmount_Binned": "Award Size",
+        "PastAwards_URL": "URL"
+    }, inplace=True)
+    table_data["Award Amount"] = table_data["Award Amount"].apply(format_currency_label)
+    table_data["URL"] = table_data["URL"].apply(lambda x: f"""<a href="{x}">Visit</a>""")
+    fig = go.Figure(data=[go.Table(
+        columnwidth=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        header=dict(
+            values=list(table_data.columns),
+            font=dict(size=14, color='white', family='ubuntu'),
+            fill_color='#264653',
+            align=['left', 'center'],
+            height=80
+        ),
+        cells=dict(
+            values=[table_data[K].tolist() for K in table_data.columns],
+            font=dict(size=12, color="black", family='ubuntu'),
+            fill_color='#f5ebe0',
+            height=80
+        ))]
     )
     fig.update_layout(margin=dict(l=0, r=10, b=10, t=30), height=500)
     return fig
@@ -98,7 +162,7 @@ def bar_scatter_chart(data: pd.DataFrame, bar_X: str, bar_Y: str, bar_name: str,
             x=data[bar_X],
             y=data[bar_Y],
             name=bar_name,
-            marker_color="#00b4d8"
+            marker_color="#094780"
         )
     )
     fig.add_trace(
@@ -107,10 +171,11 @@ def bar_scatter_chart(data: pd.DataFrame, bar_X: str, bar_Y: str, bar_name: str,
             y=data[scatter_Y],
             mode="lines+markers",
             name=scatter_name,
-            marker_color="#ff4d6d"
+            line=dict(color='#ff4d6d', width=4),
+            marker=dict(color='#ff4d6d', size=10),
         )
     )
-    fig.update_layout(title=title, height=400, showlegend=False,
+    fig.update_layout(title=title, height=600, showlegend=False, xaxis_title=bar_X, yaxis_title="Count",
                       hovermode="x unified",
                       hoverlabel=dict(
                           bgcolor="white",
@@ -129,38 +194,54 @@ def bar_chart(data: pd.DataFrame, x: str, y: str, orient: str, title: str, text=
             x=data[x],
             orientation=orient,
             text=data[text],
-            marker_color="#00b4d8",
-            hovertext=pre_hover_text + " " + (round(data[text], 2)).astype(str)
+            marker_color="#094780",
+            hovertext=pre_hover_text + " " + (round(data[text], 2)).astype(str),
         )
     )
-    fig.update_layout(title=title, height=400,
+    fig.update_layout(title=title, height=600,
                       hovermode="x unified",
                       hoverlabel=dict(
                           bgcolor="white",
                           font_color="black",
                           font_size=16,
                           font_family="Rockwell"
-                      ))
+                      ), yaxis=dict(tickfont=dict(size=20))
+                      )
     return fig
 
 
 def binned_bar_chart(data: pd.DataFrame, x: str, y: str, color: str, title):
+    data = data[(data[x] <= 10) & (data[x] >= 1)]
+    data[color] = data[color].str[:20]
     fig = px.bar(data_frame=data,
                  x=x,
                  y=y,
                  color=color,
                  title=title,
+                 color_discrete_sequence=["#f1ba0a", "#a70b0b", "#03045e", "#4cc9f0",
+                                          "#495057", "#012a4a", "#ff0a54", "#aacc00",
+                                          "#0096c7", "#2d6a4f", "#7209b7"]
                  )
+    fig.update_layout(title=title, height=500)
     return fig
 
 
 def binned_scatter_plot(data: pd.DataFrame, x: str, y: str, color: str, title: str):
+    data[color] = data[color].str[:20]
     fig = px.scatter(data_frame=data, x=x,
                      y=y,
                      color=color,
-                     symbol_sequence=list(["diamond"]*len(data)),
+                     symbol_sequence=list(["diamond"] * len(data)),
                      title=title,
+                     color_discrete_sequence=["#f1ba0a", "#a70b0b", "#03045e", "#4cc9f0",
+                                              "#495057", "#012a4a", "#ff0a54", "#aacc00",
+                                              "#0096c7", "#2d6a4f", "#7209b7"]
                      )
+    fig.update_layout(title=title, height=500)
+    fig.update_xaxes(categoryorder='array', categoryarray=['0-3 months', '3-6 months',
+                                                           '6-12 months', '12-18 months',
+                                                           '18+ months'])
+    fig.update_traces(marker={'size': 15})
     return fig
 
 
@@ -173,14 +254,14 @@ def scatter_plot(data: pd.DataFrame, x: str, y: str, title: str, name, text=None
                    text=data[text],
                    textposition="top center",
                    fill='tozeroy',
-                   fillcolor="#90e0ef",
-                   line=dict(color='#e63946', width=2),
-                   marker=dict(color='#e63946', size=8),
+                   fillcolor="#00b4d8",
+                   line=dict(color='#094780', width=2),
+                   marker=dict(color='#094780', size=8),
                    name=name,
                    hovertext=str(name) + " " + data[text].astype(str)
                    )
     )
-    fig.update_layout(title=title, height=400,
+    fig.update_layout(title=title, height=600, xaxis_title="Posted Date", yaxis_title="Count",
                       hovermode="x unified",
                       hoverlabel=dict(
                           bgcolor="white",
@@ -193,7 +274,7 @@ def scatter_plot(data: pd.DataFrame, x: str, y: str, title: str, name, text=None
 
 def pie_chart(data: pd.DataFrame, values: str, names: str, title: str, text_info: str):
     fig = px.pie(data, values=values, names=names,
-                 hole=0.3, title=title, height=500)
+                 hole=0.3, title=title, height=500, color_discrete_sequence=power_bi_colors[::-1])
     fig.update_traces(textinfo=text_info,
                       hoverlabel=dict(
                           bgcolor="white",
@@ -202,33 +283,6 @@ def pie_chart(data: pd.DataFrame, values: str, names: str, title: str, text_info
                           font_family="Rockwell"
                       )
                       )
-    return fig
-
-
-def awards_table(data: pd.DataFrame, columns: list):
-    table_data = data[columns]
-    table_data.rename(columns={
-        "AwardAmount_Binned": "Award Size",
-        "PastAwards_URL": "URL"
-    }, inplace=True)
-    table_data["Award Amount"] = table_data["Award Amount"].apply(format_currency_label)
-    fig = go.Figure(data=[go.Table(
-        columnwidth=[1, 1, 1, 1, 1, 1, 1, 1, 1, 5],
-        header=dict(
-            values=list(table_data.columns),
-            font=dict(size=18, color='white', family='ubuntu'),
-            fill_color='#264653',
-            align=['left', 'center'],
-            height=80
-        ),
-        cells=dict(
-            values=[table_data[K].tolist() for K in table_data.columns],
-            font=dict(size=12, color="black", family='ubuntu'),
-            fill_color='#f5ebe0',
-            height=80
-        ))]
-    )
-    fig.update_layout(margin=dict(l=0, r=10, b=10, t=30), height=500)
     return fig
 
 
@@ -245,7 +299,7 @@ def table_chart(data: pd.DataFrame, title: str):
         cells=dict(
             values=[data[K].tolist() for K in data.columns],
             font=dict(size=12, color="black", family='ubuntu'),
-            fill_color='#f5ebe0',
+            fill_color='#f0efeb',
             height=50
         ))]
     )
@@ -269,35 +323,6 @@ def contracts_kpis(data: pd.DataFrame):
     contracts_value = data["Award Amount"].sum()
 
     return contracts_count, average_offers_per_contract, contracts_value
-
-
-def forecast_table(data: pd.DataFrame, columns: list):
-    table_data = data[columns]
-    table_data.rename(columns={
-        "Recipient Name": "Incumbent Name",
-        "naics_description": "Description",
-        "Award Amount": "Current Award Amount",
-        "PastAwards_URL": "URL"
-    }, inplace=True)
-    table_data["Current Award Amount"] = table_data["Current Award Amount"].apply(format_currency_label)
-    fig = go.Figure(data=[go.Table(
-        columnwidth=[1, 1, 1, 2, 1, 1, 1, 1, 1, 5],
-        header=dict(
-            values=list(table_data.columns),
-            font=dict(size=18, color='white', family='ubuntu'),
-            fill_color='#264653',
-            align=['left', 'center'],
-            height=80
-        ),
-        cells=dict(
-            values=[table_data[K].tolist() for K in table_data.columns],
-            font=dict(size=12, color="black", family='ubuntu'),
-            fill_color='#f5ebe0',
-            height=80
-        ))]
-    )
-    fig.update_layout(margin=dict(l=0, r=10, b=10, t=30), height=500)
-    return fig
 
 
 def format_currency_label(value):

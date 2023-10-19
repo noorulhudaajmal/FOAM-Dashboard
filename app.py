@@ -1,13 +1,10 @@
 import pandas as pd
 import streamlit as st
-import plotly.graph_objects as go
-import plotly.express as px
 import streamlit_option_menu as menu
-from wordcloud import WordCloud
-from utils import Widgets, get_widgets_formats, format_currency_label, \
+from utils import format_currency_label, \
     current_opportunities_kpis, bar_scatter_chart, bar_chart, scatter_plot, pre_process_data, opportunities_table, \
-    competitor_kpis, pie_chart, awards_table, table_chart, contracts_kpis, forecast_table, binned_bar_chart, \
-    binned_scatter_plot
+    competitor_kpis, pie_chart, table_chart, contracts_kpis, binned_bar_chart, \
+    binned_scatter_plot, forecast_table, awards_table, metric_div
 
 st.set_page_config(page_title="F.O.A.M", layout="wide", page_icon="📊")
 # ---------------------------------- Page Styling -------------------------------------
@@ -47,7 +44,39 @@ past_awards = pd.read_csv("PastAwards.csv",
 active_opportunities = pre_process_data(active_opportunities)
 # ------------------------------------ Menu  -------------------------------------------
 view = menu.option_menu(menu_title=None, orientation="horizontal", menu_icon=None,
-                        options=["Current Opportunities", "Competitor Info", "Forecast Recompetes"])
+                        options=["Home Page", "Current Opportunities", "Competitor Info", "Forecast Recompetes"])
+if view == "Home Page":
+    row = st.columns(2)
+    row[0].markdown("""
+    <h1 style='font-size:900%;'>
+        FOAM
+    </h1>
+    """, unsafe_allow_html=True)
+    row[0].write("### FUTURE OPPORTUNITY ASSESSMENT MANAGER")
+    row[0].write("""
+    ###### The F.O.A.M. Dashboard consolidates new government contract opportunities and past competitor successes into a single, accessible location. It aids users in spotting relevant contracts and assists in crafting proposals using previously successful strategies.
+    """)
+    row[0].image('./assets/img.png')
+    row[1].write("# ")
+    row[1].write("# ")
+    row[1].write("# ")
+    row[1].write("# ")
+    row[1].write("# ")
+    row[1].write("## ")
+    row[1].markdown(metric_div.format(label="Total Opportunities", value=active_opportunities["Notice_ID"].nunique()),
+                    unsafe_allow_html=True)
+    row[1].markdown(metric_div.format(label="Count of Positive ECS Rating",
+                                      value=len(active_opportunities[active_opportunities["Score_Mapped"] == "Positive"]
+                                                )), unsafe_allow_html=True)
+    row[1].markdown(metric_div.format(label="Opportunities With 25+ Days Remaining",
+                                      value=len(active_opportunities
+                                                [active_opportunities['DaysRemainingCode'] == "#52b788"]))
+                    , unsafe_allow_html=True)
+    row[1].markdown(metric_div.format(label="Avg. Days to Respond",
+                                      value=round(active_opportunities["Days_to_ResponseDeadline"].mean(), 1)),
+                    unsafe_allow_html=True)
+    # st.sidebar.image('./assets/logo.png')
+
 if view == "Current Opportunities":
     with st.sidebar:
         awarding_agency = st.multiselect(label="Agency",
@@ -233,13 +262,14 @@ if view == "Competitor Info":
                       title="PAST AWARDS AMOUNT BY NAICS AND RECIPIENT")
     first_chart_row_page2[1].plotly_chart(fig, use_container_width=True)
 
-    tables = awards_table(data=filtered_past_awards,
-                          columns=["Award ID", "Awarding Agency", "Recipient Name",
-                                   "AwardAmount_Binned", "Award Amount",
-                                   "Start Date", "End Date", "Last Modified Date",
-                                   "Months Until Contract Ends", "PastAwards_URL"])
-
-    st.plotly_chart(tables, use_container_width=True)
+    # ------------------------------- Competitor Info Table ---------------------------------
+    columns = ["Award ID", "Awarding Agency", "Recipient Name",
+               "AwardAmount_Binned", "Award Amount",
+               "Start Date", "End Date", "Last Modified Date",
+               "Months Until Contract Ends", "PastAwards_URL"]
+    table_data = awards_table(filtered_past_awards, columns)
+    st.plotly_chart(table_data, use_container_width=True)
+    # --------------------------------------------------------------------------------------
 
 if view == "Forecast Recompetes":
     with st.sidebar:
@@ -309,10 +339,10 @@ if view == "Forecast Recompetes":
 
     first_chart_row_page3[1].plotly_chart(fig, use_container_width=True)
     # ------------------------------------ Filtered dataframe ----------------------------
-    tables = forecast_table(data=filtered_contracts_data,
-                            columns=["Award ID", "Awarding Agency", "Recipient Name",
-                                     "naics_description", "Award Amount",
-                                     "Start Date", "End Date", "Last Modified Date",
-                                     "Months Until Contract Ends", "PastAwards_URL"])
 
-    st.plotly_chart(tables, use_container_width=True)
+    columns = ["Award ID", "Awarding Agency", "Recipient Name",
+               "naics_description", "Award Amount",
+               "Start Date", "End Date", "Last Modified Date",
+               "Months Until Contract Ends", "PastAwards_URL"]
+    table_data = forecast_table(filtered_contracts_data, columns)
+    st.plotly_chart(table_data, use_container_width=True)
