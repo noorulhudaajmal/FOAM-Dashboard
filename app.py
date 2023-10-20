@@ -4,7 +4,7 @@ import streamlit_option_menu as menu
 from utils import format_currency_label, \
     current_opportunities_kpis, bar_scatter_chart, bar_chart, scatter_plot, pre_process_data, opportunities_table, \
     competitor_kpis, pie_chart, table_chart, contracts_kpis, binned_bar_chart, \
-    binned_scatter_plot, forecast_table, awards_table, metric_div
+    binned_scatter_plot, forecast_table, awards_table, metric_div, kpi_widget, metric_div_1
 
 st.set_page_config(page_title="F.O.A.M", layout="wide", page_icon="📊")
 # ---------------------------------- Page Styling -------------------------------------
@@ -41,6 +41,10 @@ past_awards = pd.read_csv("PastAwards.csv",
                                    "number_of_offers_received", "Contract Duration (Years)"])
 
 # ------------------------------------ Data pre-processing ----------------------------
+active_opportunities["Posted_Date"] = pd.to_datetime(active_opportunities["Posted_Date"])
+past_awards["Start Date"] = pd.to_datetime(past_awards["Start Date"])
+past_awards["End Date"] = pd.to_datetime(past_awards["End Date"])
+past_awards["Last Modified Date"] = pd.to_datetime(past_awards["Last Modified Date"])
 active_opportunities = pre_process_data(active_opportunities)
 # ------------------------------------ Menu  -------------------------------------------
 view = menu.option_menu(menu_title=None, orientation="horizontal", menu_icon=None,
@@ -63,32 +67,34 @@ if view == "Home Page":
     row[1].write("# ")
     row[1].write("# ")
     row[1].write("## ")
-    row[1].markdown(metric_div.format(label="Total Opportunities", value=active_opportunities["Notice_ID"].nunique()),
+    row[1].markdown(metric_div_1.format(label="Total Opportunities", value=active_opportunities["Notice_ID"].nunique()),
                     unsafe_allow_html=True)
-    row[1].markdown(metric_div.format(label="Count of Positive ECS Rating",
-                                      value=len(active_opportunities[active_opportunities["Score_Mapped"] == "Positive"]
-                                                )), unsafe_allow_html=True)
-    row[1].markdown(metric_div.format(label="Opportunities With 25+ Days Remaining",
-                                      value=len(active_opportunities
-                                                [active_opportunities['DaysRemainingCode'] == "#52b788"]))
+    row[1].markdown(metric_div_1.format(label="Count of Positive ECS Rating",
+                                        value=len(
+                                            active_opportunities[active_opportunities["Score_Mapped"] == "Positive"]
+                                            )), unsafe_allow_html=True)
+    row[1].markdown(metric_div_1.format(label="Opportunities With 25+ Days Remaining",
+                                        value=len(active_opportunities
+                                                  [active_opportunities['DaysRemainingCode'] == "#52b788"]))
                     , unsafe_allow_html=True)
-    row[1].markdown(metric_div.format(label="Avg. Days to Respond",
-                                      value=round(active_opportunities["Days_to_ResponseDeadline"].mean(), 1)),
+    row[1].markdown(metric_div_1.format(label="Avg. Days to Respond",
+                                        value=round(active_opportunities["Days_to_ResponseDeadline"].mean(), 1)),
                     unsafe_allow_html=True)
-    # st.sidebar.image('./assets/logo.png')
+    with st.sidebar:
+        st.write("# ")
 
 if view == "Current Opportunities":
     with st.sidebar:
         awarding_agency = st.multiselect(label="Agency",
-                                         options=set(active_opportunities["Awarding_Agency"].values))
+                                         options=sorted(set(active_opportunities["Awarding_Agency"].values)))
         opp_type = st.multiselect(label="Opportunity Type",
-                                  options=set(active_opportunities["Type"].values))
+                                  options=sorted(set(active_opportunities["Type"].values)))
         ecs_rating = st.multiselect(label="ECS Rating",
-                                    options=set(active_opportunities["Score"].values))
+                                    options=sorted(set(active_opportunities["Score"].values))[::-1])
         set_aside_type = st.multiselect(label="Set Aside Type",
-                                        options=set(active_opportunities["Set_Aside_Type"].values))
+                                        options=sorted(set(active_opportunities["Set_Aside_Type"].dropna().values)))
         days_remaining = st.multiselect(label="Days Remaining",
-                                        options=set(active_opportunities["DaysRemainingCode"].values))
+                                        options=sorted(set(active_opportunities["DaysRemainingCode"].values)))
 
     # ------------------------------------ Data Filtering ----------------------------------------
 
@@ -112,10 +118,14 @@ if view == "Current Opportunities":
 
     kpi_row_page1 = st.columns(4)
 
-    kpi_row_page1[0].metric(label="Total Opportunities", value=f"{total_opportunities}")
-    kpi_row_page1[1].metric(label="Avg. Days to Respond", value=f"{days_to_respond:.1f}")
-    kpi_row_page1[2].metric(label="Count of positive ECS Rating", value=f"{count_positive_ecs}")
-    kpi_row_page1[3].metric(label="Opportunities with 25+ Days Remaining", value=f"{count_green}")
+    kpi_row_page1[0].markdown(kpi_widget(label="Total Opportunities", value=f"{total_opportunities}"),
+                              unsafe_allow_html=True)
+    kpi_row_page1[1].markdown(kpi_widget(label="Avg. Days to Respond", value=f"{days_to_respond:.1f}"),
+                              unsafe_allow_html=True)
+    kpi_row_page1[2].markdown(kpi_widget(label="Count of positive ECS Rating",
+                                         value=f"{count_positive_ecs}"), unsafe_allow_html=True)
+    kpi_row_page1[3].markdown(kpi_widget(label="Opportunities with 25+ Days Remaining",
+                                         value=f"{count_green}"), unsafe_allow_html=True)
 
     # ------------------------------------ Charts ----------------------------------------
     first_chart_row_page1 = st.columns(2)
@@ -174,21 +184,21 @@ if view == "Current Opportunities":
 if view == "Competitor Info":
     with st.sidebar:
         agency_name = st.multiselect(label="Agency",
-                                     options=set(past_awards["Awarding Agency"].values))
+                                     options=sorted(set(past_awards["Awarding Agency"].values)))
         awardee = st.multiselect(label="Awardee",
-                                 options=set(past_awards["Recipient Name"].values))
+                                 options=sorted(set(past_awards["Recipient Name"].values)))
         contract_type = st.multiselect(label="Contract Type",
-                                       options=set(past_awards["Contract Award Type"].values))
+                                       options=sorted(set(past_awards["Contract Award Type"].values)))
         contract_status = st.multiselect(label="Contract Status",
-                                         options=set(past_awards["Contract Status"].values))
+                                         options=sorted(set(past_awards["Contract Status"].values)))
+        custom_order = ['0-1 million', '1-6 million', '6-12 million', '12+ million']
         award_amount_bins = st.multiselect(label="Award Amount Bins",
-                                           options=set(past_awards["AwardAmount_Binned"].values))
-
+                                           options=sorted(set(past_awards["AwardAmount_Binned"].dropna().values),
+                                                          key=lambda x: custom_order.index(x)))
     # ------------------------------------ Data Filtering ----------------------------------------
 
-    filtered_past_awards = past_awards.copy()  # Create a copy of the original DataFrame
+    filtered_past_awards = past_awards.copy()
 
-    # Check if any filters are selected and apply them
     if agency_name:
         filtered_past_awards = filtered_past_awards[filtered_past_awards["Awarding Agency"].isin(agency_name)]
     if awardee:
@@ -205,11 +215,13 @@ if view == "Competitor Info":
     total_past_awards, six_million_above, award_amount = competitor_kpis(data=filtered_past_awards)
 
     kpi_row_page2 = st.columns(3)
-
-    kpi_row_page2[0].metric(label="Total Number of Past Awards", value=f"{total_past_awards}")
-    kpi_row_page2[1].metric(label="Number of Awards Value $6+ Million", value=f"{six_million_above}")
-    kpi_row_page2[2].metric(label="Total Past Award(s) Amount", value=f"${format_currency_label(award_amount)}")
-
+    kpi_row_page2[0].markdown(kpi_widget(label="Total Number of Past Awards", value=f"{total_past_awards}"),
+                              unsafe_allow_html=True)
+    kpi_row_page2[1].markdown(kpi_widget(label="Number of Awards Value $6+ Million", value=f"{six_million_above}"),
+                              unsafe_allow_html=True)
+    kpi_row_page2[2].markdown(kpi_widget(label="Total Past Award(s) Amount",
+                                         value=f"${format_currency_label(award_amount)}"),
+                              unsafe_allow_html=True)
     # ------------------------------------ Charts ----------------------------------------
     first_chart_row_page2 = st.columns(2)
     # ------------------------------------ Number of Awards By Recipient -----------------
@@ -274,14 +286,17 @@ if view == "Competitor Info":
 if view == "Forecast Recompetes":
     with st.sidebar:
         agency = st.multiselect(label="Agency",
-                                options=set(past_awards["Awarding Agency"].values))
+                                options=sorted(set(past_awards["Awarding Agency"].values)))
         incumbent = st.multiselect(label="Incumbent Name",
-                                   options=set(past_awards["Recipient Name"].values))
-        contract_status = st.multiselect(label="Contract Status",
-                                         options=set(past_awards["Contract Status"].values))
+                                   options=sorted(set(past_awards["Recipient Name"].values)))
+        status_contract = st.multiselect(label="Contract Status",
+                                         options=sorted(set(past_awards["Contract Status"].values)))
+        custom_order = [
+            '0-3 months', '3-6 months', '6-12 months', '12-18 months', '18+ months', 'Contract/s Expired'
+        ]
         months_to_end = st.multiselect(label="Months To Contracts Ends",
-                                       options=set(past_awards["Months Until Contract Ends"].values))
-
+                                       options=sorted(set(past_awards["Months Until Contract Ends"].values),
+                                                      key=lambda x: custom_order.index(x)))
     # ------------------------------------ Data Filtering ----------------------------------------
 
     filtered_contracts_data = past_awards.copy()  # Create a copy of the original DataFrame
@@ -293,20 +308,23 @@ if view == "Forecast Recompetes":
     if incumbent:
         filtered_contracts_data = filtered_contracts_data[
             filtered_contracts_data["Recipient Name"].isin(incumbent)]
-    if contract_status:
+    if status_contract:
         filtered_contracts_data = filtered_contracts_data[
-            filtered_contracts_data["Contract Award Type"].isin(contract_status)]
+            filtered_contracts_data["Contract Status"].isin(status_contract)]
     if months_to_end:
         filtered_contracts_data = filtered_contracts_data[
-            filtered_contracts_data["Contract Status"].isin(months_to_end)]
+            filtered_contracts_data["Months Until Contract Ends"].isin(months_to_end)]
     # ------------------------------------ KPIs ----------------------------------------
 
     contracts_count, average_offers_per_contract, contracts_value = contracts_kpis(data=filtered_contracts_data)
     kpi_row_page3 = st.columns(3)
 
-    kpi_row_page3[0].metric(label="Count of Contracts", value=f"{contracts_count}")
-    kpi_row_page3[1].metric(label="Avg. Offers Per Contract", value=f"{average_offers_per_contract:.2f}")
-    kpi_row_page3[2].metric(label="Contract(s) Value", value=f"${format_currency_label(contracts_value)}")
+    kpi_row_page3[0].markdown(kpi_widget(label="Count of Contracts", value=f"{contracts_count}"),
+                              unsafe_allow_html=True)
+    kpi_row_page3[1].markdown(kpi_widget(label="Avg. Offers Per Contract", value=f"{average_offers_per_contract:.2f}"),
+                              unsafe_allow_html=True)
+    kpi_row_page3[2].markdown(kpi_widget(label="Contract(s) Value",
+                                         value=f"${format_currency_label(contracts_value)}"), unsafe_allow_html=True)
 
     # ------------------------------------ Charts ----------------------------------------
     first_chart_row_page3 = st.columns(2)

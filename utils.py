@@ -1,3 +1,5 @@
+import datetime
+
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
@@ -15,8 +17,7 @@ power_bi_colors = [
     "#495057",  # Gray
 ]
 
-
-metric_div = """
+metric_div_1 = """
     <div data-testid="metric-container" style="background:#708d81;
     border-radius:10px;text-align:center;margin:8px;width:80%;margin-left:30px;">
       <label data-testid="stMetricLabel" visibility="0" class="css-q49buc e1i5pmia2">
@@ -32,11 +33,32 @@ metric_div = """
     </div>
 """
 
+metric_div = """
+    <div data-testid="metric-container" style="background:#708d81;
+    border-radius:10px;text-align:center;">
+      <label data-testid="stMetricLabel" visibility="0" class="css-q49buc e1i5pmia2">
+        <div class="css-1wivap2 e1i5pmia3">
+          <div data-testid="stMarkdownContainer" class="css-q8sbsg e1nzilvr5">
+            <h4 style="color:white; text-align:center;">{label}</h4>
+          </div>
+        </div>
+      </label>
+      <div data-testid="stMetricValue" class="css-1xarl3l e1i5pmia1">
+        <div class="css-1wivap2 e1i5pmia3">{value}</div>
+      </div>
+    </div>
+"""
+
+
+
+def kpi_widget(label, value):
+    return metric_div.format(label=label, value=value)
+
 
 def pre_process_data(data: pd.DataFrame):
     data["Posted_Date"] = pd.to_datetime(data["Posted_Date"])
     # data["Response_Deadline"] = pd.to_datetime(data["Response_Deadline"])
-    data["DaysRemainingCode"] = data["DaysRemainingCode"].map({
+    data["DaysRemainingColor"] = data["DaysRemainingCode"].map({
         "Red": "#e76f51",
         "Yellow": "#e9c46a",
         "Green": "#52b788"
@@ -45,6 +67,7 @@ def pre_process_data(data: pd.DataFrame):
 
 
 def opportunities_table(data: pd.DataFrame, columns: list):
+    data = format_date_column(data)
     table_data = data[columns]
     table_data.rename(columns={
         "Awarding_Agency": "Awarding Agency",
@@ -55,7 +78,6 @@ def opportunities_table(data: pd.DataFrame, columns: list):
         "Score": "ECS Rating",
         "Posted_Date": "Posted Date"
     }, inplace=True)
-    table_data["Posted Date"] = table_data["Posted Date"].dt.date
     table_data["URL"] = table_data["URL"].apply(lambda x: f"""<a href="{x}">Visit</a>""")
     fig = go.Figure(data=[go.Table(
         columnwidth=[2, 2, 2, 1, 1, 1, 2, 1, 1],
@@ -63,14 +85,15 @@ def opportunities_table(data: pd.DataFrame, columns: list):
             values=list(table_data.columns),
             font=dict(size=14, color='white', family='ubuntu'),
             fill_color='#264653',
-            align=['left', 'center'],
+            align=['center'],
             height=80
         ),
         cells=dict(
             values=[table_data[K].tolist() for K in table_data.columns],
             font=dict(size=12, color="black", family='ubuntu'),
             fill_color=['#f5ebe0', '#f5ebe0', '#f5ebe0', '#f5ebe0',
-                        data["DaysRemainingCode"].values, '#f5ebe0'],
+                        data["DaysRemainingColor"].values, '#f5ebe0'],
+            align=['center'],
             height=80
         ))]
     )
@@ -79,6 +102,7 @@ def opportunities_table(data: pd.DataFrame, columns: list):
 
 
 def forecast_table(data: pd.DataFrame, columns: list):
+    data = format_date_column(data)
     table_data = data[columns]
     table_data.rename(columns={
         "Recipient Name": "Incumbent Name",
@@ -87,7 +111,7 @@ def forecast_table(data: pd.DataFrame, columns: list):
         "PastAwards_URL": "URL"
     }, inplace=True)
     table_data["Current Award Amount"] = table_data["Current Award Amount"].apply(format_currency_label)
-    table_data["URL"] = table_data["URL"].apply(lambda x: f"""<a href="{x}">Go to Site</a>""")
+    table_data["URL"] = table_data["URL"].apply(lambda x: f"""<a href="{x}">Visit</a>""")
     fig = go.Figure(data=[go.Table(
         columnwidth=[1, 1, 1, 2, 1, 1, 1, 1, 1, 1],
         header=dict(
@@ -109,6 +133,7 @@ def forecast_table(data: pd.DataFrame, columns: list):
 
 
 def awards_table(data: pd.DataFrame, columns: list):
+    data = format_date_column(data)
     table_data = data[columns]
     table_data.rename(columns={
         "AwardAmount_Binned": "Award Size",
@@ -140,7 +165,7 @@ def current_opportunities_kpis(data: pd.DataFrame):
     total_opportunities = data["Notice_ID"].nunique()
     days_to_respond = data["Days_to_ResponseDeadline"].mean()
     count_positive_ecs = len(data[data["Score_Mapped"] == "Positive"])
-    count_green = len(data[data['DaysRemainingCode'] == "#52b788"])
+    count_green = len(data[data['DaysRemainingCode'] == "Green"])
 
     return total_opportunities, days_to_respond, count_positive_ecs, count_green
 
@@ -162,17 +187,21 @@ def bar_scatter_chart(data: pd.DataFrame, bar_X: str, bar_Y: str, bar_name: str,
             x=data[bar_X],
             y=data[bar_Y],
             name=bar_name,
-            marker_color="#094780"
+            marker_color="#094780",
+            text=data[bar_Y]
         )
     )
     fig.add_trace(
         go.Scatter(
             x=data[scatter_X],
             y=data[scatter_Y],
-            mode="lines+markers",
+            mode="lines+markers+text",
             name=scatter_name,
             line=dict(color='#ff4d6d', width=4),
             marker=dict(color='#ff4d6d', size=10),
+            text=round(data[scatter_Y],1),
+            textposition="top left",
+            textfont=dict(color='#ff4d6d', size=18)
         )
     )
     fig.update_layout(title=title, height=600, showlegend=False, xaxis_title=bar_X, yaxis_title="Count",
@@ -191,9 +220,9 @@ def bar_chart(data: pd.DataFrame, x: str, y: str, orient: str, title: str, text=
     fig.add_trace(
         go.Bar(
             y=data[y],
-            x=data[x],
+            x=data[x].astype(int),
             orientation=orient,
-            text=data[text],
+            text=data[text].astype(int),
             marker_color="#094780",
             hovertext=pre_hover_text + " " + (round(data[text], 2)).astype(str),
         )
@@ -334,3 +363,11 @@ def format_currency_label(value):
         return f'{value / 1e3:.2f} K'
     else:
         return f'{value:.2f}'
+
+
+def format_date_column(data):
+    if len(data) != 0:
+        for i in data.columns:
+            if isinstance(data[i].iloc[0], datetime.datetime):
+                data[i] = data[i].dt.strftime("%m-%d-%Y")
+    return data
