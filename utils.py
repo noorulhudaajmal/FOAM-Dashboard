@@ -50,14 +50,11 @@ metric_div = """
 """
 
 
-
 def kpi_widget(label, value):
     return metric_div.format(label=label, value=value)
 
 
 def pre_process_data(data: pd.DataFrame):
-    data["Posted_Date"] = pd.to_datetime(data["Posted_Date"])
-    # data["Response_Deadline"] = pd.to_datetime(data["Response_Deadline"])
     data["DaysRemainingColor"] = data["DaysRemainingCode"].map({
         "Red": "#e76f51",
         "Yellow": "#e9c46a",
