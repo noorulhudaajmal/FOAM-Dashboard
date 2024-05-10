@@ -1,10 +1,11 @@
 import datetime
-
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 
-power_bi_colors = [
+
+# color palette
+COLORS = [
     "#3f37c9",  # Blue
     "#FF6C00",  # Orange
     "#007f5f",
@@ -17,6 +18,7 @@ power_bi_colors = [
     "#495057",  # Gray
 ]
 
+# html for metric components (card view)
 metric_div_1 = """
     <div data-testid="metric-container" style="background:#708d81;
     border-radius:10px;text-align:center;margin:8px;width:80%;margin-left:30px;">
@@ -51,10 +53,25 @@ metric_div = """
 
 
 def kpi_widget(label, value):
+    """
+    metric card view with provided label and value
+    :param label: The label for the metric
+    :param value: The value for the metric
+    :return: the html for metric card
+    """
     return metric_div.format(label=label, value=value)
 
 
-def pre_process_data(data: pd.DataFrame):
+def preprocess_color_info(data: pd.DataFrame):
+    """
+    Preprocesses color information in a DataFrame
+    by mapping a color code.
+
+    :param data: DataFrame containing color info with values 'Red', 'Yellow', or 'Green'.
+    :return: DataFrame with an additional info from mapping to
+    color codes '#e76f51' (Red), '#e9c46a' (Yellow), or '#52b788' (Green).
+    """
+
     data["DaysRemainingColor"] = data["DaysRemainingCode"].map({
         "Red": "#e76f51",
         "Yellow": "#e9c46a",
@@ -64,6 +81,13 @@ def pre_process_data(data: pd.DataFrame):
 
 
 def opportunities_table(data: pd.DataFrame, columns: list):
+    """
+    Generates a formatted table for displaying government contract opportunities.
+
+    :param data: A pandas DataFrame.
+    :param columns: A list of column names to include in the table.
+    :return: A Plotly Figure object representing the formatted table.
+    """
     data = format_date_column(data)
     table_data = data[columns]
     table_data.rename(columns={
@@ -99,6 +123,13 @@ def opportunities_table(data: pd.DataFrame, columns: list):
 
 
 def forecast_table(data: pd.DataFrame, columns: list):
+    """
+    Generates a formatted table for forecast data.
+
+    :param data: DataFrame containing forecast data.
+    :param columns: List of column names to include in the table.
+    :return: Plotly figure object representing the formatted table.
+    """
     data = format_date_column(data)
     table_data = data[columns]
     table_data.rename(columns={
@@ -130,6 +161,13 @@ def forecast_table(data: pd.DataFrame, columns: list):
 
 
 def awards_table(data: pd.DataFrame, columns: list):
+    """
+    Generates a formatted table visualization of awards data.
+
+    :param data: DataFrame containing awards data.
+    :param columns: List of columns to include in the table.
+    :return: Plotly Figure object representing the awards table.
+    """
     data = format_date_column(data)
     table_data = data[columns]
     table_data.rename(columns={
@@ -159,6 +197,13 @@ def awards_table(data: pd.DataFrame, columns: list):
 
 
 def current_opportunities_kpis(data: pd.DataFrame):
+    """
+    Calculate KPIs for current opportunities.
+
+    :param data: A pandas DataFrame containing the data for current opportunities.
+    :return: A tuple containing the total number of opportunities, the average days to respond,
+             the count of positive score mappings, and the count of avb opportunities.
+    """
     total_opportunities = data["Notice_ID"].nunique()
     days_to_respond = data["Days_to_ResponseDeadline"].mean()
     count_positive_ecs = len(data[data["Score_Mapped"] == "Positive"])
@@ -168,6 +213,14 @@ def current_opportunities_kpis(data: pd.DataFrame):
 
 
 def competitor_kpis(data: pd.DataFrame):
+    """
+    Calculate KPIs for competitors based on the given data.
+
+    :param data: DataFrame containing competitor data.
+    :return: A tuple containing the total number of unique past awards,
+             the number of awards with amounts equal to or above six million,
+             and the total amount of awards.
+    """
     total_past_awards = data["generated_internal_id"].nunique()
     six_million_above = len(data[
                                 (data["AwardAmount_Binned"] == "6-12 million") |
@@ -178,6 +231,20 @@ def competitor_kpis(data: pd.DataFrame):
 
 def bar_scatter_chart(data: pd.DataFrame, bar_X: str, bar_Y: str, bar_name: str,
                       scatter_X: str, scatter_Y: str, scatter_name, title):
+    """
+    Generate a combined bar and scatter chart using Plotly.
+
+    :param data: A pandas DataFrame containing the data to be plotted.
+    :param bar_X: The column name in 'data' for the X-axis of the bar chart.
+    :param bar_Y: The column name in 'data' for the Y-axis of the bar chart.
+    :param bar_name: The name of the bar chart series.
+    :param scatter_X: The column name in 'data' for the X-axis of the scatter chart.
+    :param scatter_Y: The column name in 'data' for the Y-axis of the scatter chart.
+    :param scatter_name: The name of the scatter chart series.
+    :param title: The title of the chart.
+    :return: A Plotly Figure object representing the combined bar and scatter chart.
+    """
+
     fig = go.Figure()
     fig.add_trace(
         go.Bar(
@@ -213,6 +280,18 @@ def bar_scatter_chart(data: pd.DataFrame, bar_X: str, bar_Y: str, bar_name: str,
 
 
 def bar_chart(data: pd.DataFrame, x: str, y: str, orient: str, title: str, text=None, pre_hover_text=None):
+    """
+    Create a bar chart using Plotly.
+
+    :param data: A pandas DataFrame containing the data to be plotted.
+    :param x: The column name from 'data' to be used for the x-axis.
+    :param y: The column name from 'data' to be used for the y-axis.
+    :param orient: The orientation of the bars. Either 'h' for horizontal or 'v' for vertical.
+    :param title: The title of the chart.
+    :param text: The column name from 'data' to be used as text labels on the bars.
+    :param pre_hover_text: Additional text to be displayed in the hover tooltip.
+    :return: A Plotly Figure object representing the bar chart.
+    """
     fig = go.Figure()
     fig.add_trace(
         go.Bar(
@@ -237,6 +316,16 @@ def bar_chart(data: pd.DataFrame, x: str, y: str, orient: str, title: str, text=
 
 
 def binned_bar_chart(data: pd.DataFrame, x: str, y: str, color: str, title):
+    """
+    Create a binned bar chart using Plotly Express.
+
+    :param data: A pandas DataFrame containing the data to be plotted.
+    :param x: A string specifying the column in `data` to be used for the x-axis.
+    :param y: A string specifying the column in `data` to be used for the y-axis.
+    :param color: A string specifying the column in `data` to be used for the color encoding.
+    :param title: A string specifying the title of the plot.
+    :return: A Plotly Figure object representing the binned bar chart.
+    """
     data = data[(data[x] <= 10) & (data[x] >= 1)]
     data[color] = data[color].str[:20]
     fig = px.bar(data_frame=data,
@@ -253,6 +342,16 @@ def binned_bar_chart(data: pd.DataFrame, x: str, y: str, color: str, title):
 
 
 def binned_scatter_plot(data: pd.DataFrame, x: str, y: str, color: str, title: str):
+    """
+    Creates a binned scatter plot using Plotly Express.
+
+    :param data: Pandas DataFrame containing the data.
+    :param x: Name of the column to be plotted on the x-axis.
+    :param y: Name of the column to be plotted on the y-axis.
+    :param color: Name of the column used for color differentiation.
+    :param title: Title of the plot.
+    :return: Plotly figure object.
+    """
     data[color] = data[color].str[:20]
     fig = px.scatter(data_frame=data, x=x,
                      y=y,
@@ -272,6 +371,17 @@ def binned_scatter_plot(data: pd.DataFrame, x: str, y: str, color: str, title: s
 
 
 def scatter_plot(data: pd.DataFrame, x: str, y: str, title: str, name, text=None):
+    """
+    Create a scatter plot using Plotly graph objects.
+
+    :param data: A pandas DataFrame containing the data to be plotted.
+    :param x: The column name for the x-axis values.
+    :param y: The column name for the y-axis values.
+    :param title: The title of the plot.
+    :param name: The name of the trace.
+    :param text: The column name for the text annotations (default is None).
+    :return: A plotly Figure object.
+    """
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(x=data[x],
@@ -299,8 +409,18 @@ def scatter_plot(data: pd.DataFrame, x: str, y: str, title: str, name, text=None
 
 
 def pie_chart(data: pd.DataFrame, values: str, names: str, title: str, text_info: str):
+    """
+    Generate a pie chart.
+
+    :param data: DataFrame containing the data.
+    :param values: Column name in data for the wedge values.
+    :param names: Column name in data for the wedge labels.
+    :param title: Title of the pie chart.
+    :param text_info: Determines which trace information appear on the chart.
+    :return: Plotly figure object representing the pie chart.
+    """
     fig = px.pie(data, values=values, names=names,
-                 hole=0.3, title=title, height=500, color_discrete_sequence=power_bi_colors[::-1])
+                 hole=0.3, title=title, height=500, color_discrete_sequence=COLORS[::-1])
     fig.update_traces(textinfo=text_info,
                       hoverlabel=dict(
                           bgcolor="white",
@@ -313,6 +433,13 @@ def pie_chart(data: pd.DataFrame, values: str, names: str, title: str, text_info
 
 
 def table_chart(data: pd.DataFrame, title: str):
+    """
+    Generate a formatted table chart using plotly graph objects.
+
+    :param data: DataFrame containing the data.
+    :param title: Title of the table chart.
+    :return: Plotly figure object representing the table chart.
+    """
     fig = go.Figure(data=[go.Table(
         columnwidth=[1, 1, 1],
         header=dict(
@@ -335,6 +462,12 @@ def table_chart(data: pd.DataFrame, title: str):
 
 
 def contracts_kpis(data: pd.DataFrame):
+    """
+    Calculate KPIs related to contracts.
+
+    :param data: DataFrame containing the contracts' data.
+    :return: Tuple containing contracts count, average offers per contract, and total contracts value.
+    """
     contracts_count = data["generated_internal_id"].nunique()
     total_offers = data['number_of_offers_received'].sum()
     filtered_records = data[
@@ -352,6 +485,12 @@ def contracts_kpis(data: pd.DataFrame):
 
 
 def format_currency_label(value):
+    """
+    Format a numerical value as a currency label.
+
+    :param value: The numerical value to format.
+    :return: Formatted currency label string.
+    """
     if value >= 1e9:  # Billion
         return f'{value / 1e9:.2f} bn'
     elif value >= 1e6:  # Million
@@ -363,6 +502,12 @@ def format_currency_label(value):
 
 
 def format_date_column(data):
+    """
+    Format date columns in a DataFrame.
+
+    :param data: DataFrame containing the data.
+    :return: DataFrame with formatted date columns.
+    """
     if len(data) != 0:
         for i in data.columns:
             if isinstance(data[i].iloc[0], datetime.datetime):

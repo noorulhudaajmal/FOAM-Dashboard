@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 import streamlit_option_menu as menu
 from utils import format_currency_label, \
-    current_opportunities_kpis, bar_scatter_chart, bar_chart, scatter_plot, pre_process_data, opportunities_table, \
+    current_opportunities_kpis, bar_scatter_chart, bar_chart, scatter_plot, preprocess_color_info, opportunities_table, \
     competitor_kpis, pie_chart, table_chart, contracts_kpis, binned_bar_chart, \
     binned_scatter_plot, forecast_table, awards_table, metric_div, kpi_widget, metric_div_1
 
@@ -25,14 +25,14 @@ with st.sidebar:
 
 # ----------------------------------- Data Loading ------------------------------------
 try:
-    active_opportunities = pd.read_csv("ActiveOpportunities.csv",
+    active_opportunities = pd.read_csv("./data/ActiveOpportunities.csv",
                                        usecols=["Awarding_Agency", "Title", "DescriptionText", "Type",
                                                 "Score", "Set_Aside_Type",
                                                 "DaysRemainingCode", "Notice_ID", "Score_Mapped",
                                                 "Days_to_ResponseDeadline", "Posted_Date",
                                                 "NAICSCodeDesc", "Description link"
                                                 ])
-    past_awards = pd.read_csv("PastAwards.csv",
+    past_awards = pd.read_csv("./data/PastAwards.csv",
                               usecols=["Award ID", "Awarding Agency", "Recipient Name",
                                        "Contract Award Type", "Contract Status", "naics_description",
                                        "AwardAmount_Binned", "generated_internal_id", "Award Amount",
@@ -40,13 +40,12 @@ try:
                                        "Months Until Contract Ends", "PastAwards_URL",
                                        "number_of_offers_received", "Contract Duration (Years)"])
 
-
     # ------------------------------------ Data pre-processing ----------------------------
     active_opportunities["Posted_Date"] = pd.to_datetime(active_opportunities["Posted_Date"])
     past_awards["Start Date"] = pd.to_datetime(past_awards["Start Date"])
     past_awards["End Date"] = pd.to_datetime(past_awards["End Date"])
     past_awards["Last Modified Date"] = pd.to_datetime(past_awards["Last Modified Date"])
-    active_opportunities = pre_process_data(active_opportunities)
+    active_opportunities = preprocess_color_info(active_opportunities)
     # ------------------------------------ Menu  -------------------------------------------
     view = menu.option_menu(menu_title=None, orientation="horizontal", menu_icon=None,
                             options=["Home Page", "Current Opportunities", "Competitor Info", "Forecast Recompetes"])
@@ -62,18 +61,23 @@ try:
         ###### The F.O.A.M. Dashboard consolidates new government contract opportunities and past competitor successes into a single, accessible location. It aids users in spotting relevant contracts and assists in crafting proposals using previously successful strategies.
         """)
         row[0].image('./assets/img.png')
-        row[1].write("# "); row[1].write("# "); row[1].write("# ");
-        row[1].write("# "); row[1].write("# "); row[1].write("## ")
+        row[1].write("# ");
+        row[1].write("# ");
+        row[1].write("# ");
+        row[1].write("# ");
+        row[1].write("# ");
+        row[1].write("## ")
 
-        row[1].markdown(metric_div_1.format(label="Total Opportunities", value=active_opportunities["Notice_ID"].nunique()),
-                        unsafe_allow_html=True)
+        row[1].markdown(
+            metric_div_1.format(label="Total Opportunities", value=active_opportunities["Notice_ID"].nunique()),
+            unsafe_allow_html=True)
         row[1].markdown(metric_div_1.format(label="Count of Positive ECS Rating",
                                             value=len(
                                                 active_opportunities[active_opportunities["Score_Mapped"] == "Positive"]
-                                                )), unsafe_allow_html=True)
+                                            )), unsafe_allow_html=True)
         row[1].markdown(metric_div_1.format(label="Opportunities With 25+ Days Remaining",
                                             value=len(active_opportunities
-                                                      [active_opportunities['DaysRemainingCode'] == "#52b788"]))
+                                                      [active_opportunities['DaysRemainingCode'] == "Green"]))
                         , unsafe_allow_html=True)
         row[1].markdown(metric_div_1.format(label="Avg. Days to Respond",
                                             value=round(active_opportunities["Days_to_ResponseDeadline"].mean(), 1)),
@@ -201,7 +205,8 @@ try:
         if contract_status:
             filtered_past_awards = filtered_past_awards[filtered_past_awards["Contract Status"].isin(contract_status)]
         if award_amount_bins:
-            filtered_past_awards = filtered_past_awards[filtered_past_awards["AwardAmount_Binned"].isin(award_amount_bins)]
+            filtered_past_awards = filtered_past_awards[
+                filtered_past_awards["AwardAmount_Binned"].isin(award_amount_bins)]
 
         # ------------------------------------ KPIs ----------------------------------------
 
@@ -219,7 +224,8 @@ try:
         first_chart_row_page2 = st.columns(2)
         # ------------------------------------ Number of Awards By Recipient -----------------
 
-        awards_by_recipient = filtered_past_awards.groupby("Recipient Name")["generated_internal_id"].count().reset_index()
+        awards_by_recipient = filtered_past_awards.groupby("Recipient Name")[
+            "generated_internal_id"].count().reset_index()
         awards_by_recipient = awards_by_recipient.sort_values("generated_internal_id", ascending=True)
         awards_by_recipient.rename(columns={"generated_internal_id": "Number of Awards"}, inplace=True)
         awards_by_recipient = awards_by_recipient[:10]
@@ -314,10 +320,12 @@ try:
 
         kpi_row_page3[0].markdown(kpi_widget(label="Count of Contracts", value=f"{contracts_count}"),
                                   unsafe_allow_html=True)
-        kpi_row_page3[1].markdown(kpi_widget(label="Avg. Offers Per Contract", value=f"{average_offers_per_contract:.2f}"),
-                                  unsafe_allow_html=True)
+        kpi_row_page3[1].markdown(
+            kpi_widget(label="Avg. Offers Per Contract", value=f"{average_offers_per_contract:.2f}"),
+            unsafe_allow_html=True)
         kpi_row_page3[2].markdown(kpi_widget(label="Contract(s) Value",
-                                             value=f"${format_currency_label(contracts_value)}"), unsafe_allow_html=True)
+                                             value=f"${format_currency_label(contracts_value)}"),
+                                  unsafe_allow_html=True)
 
         # ------------------------------------ Charts ----------------------------------------
         first_chart_row_page3 = st.columns(2)

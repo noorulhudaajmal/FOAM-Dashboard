@@ -10,12 +10,23 @@ This project is developed using Python and utilizes various libraries and tools,
 
 - [Pandas](https://pandas.pydata.org/): For data manipulation and analysis.
 - [Streamlit](https://streamlit.io/): For creating interactive web applications.
-- [Streamlit Option Menu](https://pypi.org/project/streamlit-option-menu/): A Streamlit extension for creating option menus.
-- Custom utility functions from `utils.py`.
+
+## Data Collection
+The data for this project is collected using APIs provided by USAspending.gov. To download the required data, you can use the ./data/scraper.ipynb Jupyter Notebook. This notebook provides a steps to use the USAspending.gov API to fetch data and save it to CSV files.
+
+#### Instructions
+- Open the ./data/scraper.ipynb notebook in Jupyter Notebook or JupyterLab.
+- Follow the instructions at sam.gov website to make an account and get the API key.
+- You can also update the parameters dictionary to get data according to your preferences.
+- Run the notebook cells to fetch the data and save it to CSV files in the ./data/ directory.
+- **Make sure to review and comply with the terms and conditions of the USAspending.gov API when using the data.**
+
 
 ## Project Structure
 
 The project's main code file is the Streamlit application, where the dashboard is created and interactive visualizations are displayed. The application is structured into sections:
+
+
 
 ### Data Loading
 
